@@ -51,6 +51,7 @@
       opacity: 0.6;
       margin-bottom: 4vh;
       text-transform: uppercase;
+      text-align: center;
     }
 
     .reels {
@@ -172,7 +173,7 @@
       color: var(--bg);
       background: var(--gold);
       border: none;
-      padding: 14px 60px;
+      padding: 14px clamp(24px, 8vw, 60px);
       border-radius: 4px;
       cursor: pointer;
     }
@@ -247,6 +248,16 @@
       transition: opacity 0.2s;
     }
     #result-dismiss:hover { opacity: 0.65; }
+
+    /* iPhone SE and small phones */
+    @media (max-width: 400px) {
+      :root { --slot-h: 46vh; }
+      .reel-outer { width: 38vw; }
+      .reel-item { font-size: clamp(2rem, 10vw, 4rem); }
+      .separator { font-size: clamp(1.2rem, 5vw, 2.5rem); }
+      .reels { gap: 12px; margin-bottom: 4vh; }
+      h1 { font-size: 1.4rem; letter-spacing: 0.3em; margin-bottom: 3vh; }
+    }
   </style>
 </head>
 <body>
