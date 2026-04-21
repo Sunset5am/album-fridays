@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Album Friday Picker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --panel: #111;
+      --gold: #f0c040;
+      --gold2: #e0a020;
+      --dim: #333;
+      --text: #f5f0e8;
+      --slot-h: 58vh;
+    }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Mono', monospace;
+      color: var(--text);
+      overflow: hidden;
+    }
+	 
+	body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 3px,
+        rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px
+      );
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      letter-spacing: 0.5em;
+      color: var(--gold);
+      opacity: 0.6;
+      margin-bottom: 4vh;
+      text-transform: uppercase;
+    }
+
+    .reels {
+      display: flex;
+      gap: clamp(16px, 4vw, 48px);
+      align-items: center;
+      margin-bottom: 6vh;
+    }
+
+    .reel-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5vh;
+    }
+
+    .reel-label {
+      font-size: clamp(0.6rem, 1vw, 0.85rem);
+      letter-spacing: 0.25em;
+      color: var(--gold);
+      opacity: 0.45;
+      text-transform: uppercase;
+    }
+
+    .reel-outer {
+      width: clamp(140px, 28vw, 280px);
+      height: var(--slot-h);
+      border: 2px solid var(--dim);
+      border-radius: 8px;
+      background: var(--panel);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Scanline texture on each reel */
+    .reel-outer::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 2px,
+        rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 3px
+      );
+      pointer-events: none;
+      z-index: 5;
+      border-radius: 6px;
+    }
+
+    /* Top & bottom fade masks */
+    .reel-outer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, var(--panel) 0%, transparent 38%),
+        linear-gradient(to top,    var(--panel) 0%, transparent 38%);
+      pointer-events: none;
+      z-index: 4;
+      border-radius: 6px;
+    }
+
+    @keyframes flashGold {
+      0%   { box-shadow: 0 0 0px rgba(240,192,64,0);   border-color: var(--dim); }
+      30%  { box-shadow: 0 0 28px rgba(240,192,64,0.7), 0 0 60px rgba(240,192,64,0.3); border-color: var(--gold); }
+      100% { box-shadow: 0 0 0px rgba(240,192,64,0);   border-color: var(--dim); }
+    }
+    .reel-outer.flash {
+      animation: flashGold 0.7s ease-out forwards;
+    }
+
+    .reel-outer .highlight {
+      position: absolute;
+      left: 0; right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: calc(var(--slot-h) * 0.28);
+      border-top: 1.5px solid var(--gold);
+      border-bottom: 1.5px solid var(--gold);
+    }
+
+    .reel-inner {
+      position: absolute;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .reel-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3rem, 14vw, 9rem);
+      color: var(--text);
+      opacity: 0.25;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .reel-item.active {
+      opacity: 1;
+      color: var(--gold);
+      text-shadow: 0 0 30px rgba(240,192,64,0.6);
+    }
+
+    .separator {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2rem, 8vw, 6rem);
+      color: var(--dim);
+    }
+
+    .spin-btn {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+      letter-spacing: 0.3em;
+      color: var(--bg);
+      background: var(--gold);
+      border: none;
+      padding: 14px 60px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* Result overlay */
+    #result-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10,10,10,0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.7s ease;
+    }
+    #result-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #result-code {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3rem, 10vw, 6rem);
+      letter-spacing: 0.15em;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 0.3em;
+    }
+    #result-artist {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(0.7rem, 2vw, 1rem);
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      opacity: 0.55;
+      text-transform: uppercase;
+      margin-bottom: 0.3em;
+    }
+    #result-album {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(1.8rem, 5.5vw, 3.4rem);
+      letter-spacing: 0.06em;
+      color: var(--text);
+      text-align: center;
+      max-width: 80vw;
+      line-height: 1.1;
+    }
+
+    #result-art {
+      width: clamp(200px, 28vw, 380px);
+      height: clamp(250px, 35vw, 475px);
+      object-fit: cover;
+      border-radius: 6px;
+      margin-bottom: 1.2em;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(240,192,64,0.15);
+      display: block;
+    }
+    #result-dismiss {
+      margin-top: 2.8em;
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(0.55rem, 1.1vw, 0.75rem);
+      letter-spacing: 0.3em;
+      color: var(--text);
+      opacity: 0.28;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      background: none;
+      transition: opacity 0.2s;
+    }
+    #result-dismiss:hover { opacity: 0.65; }
+  </style>
+</head>
+<body>
+
+<h1>Album Friday Picker</h1>
+
+<!-- Result overlay -->
+<div id="result-overlay">
+  <div id="result-code"></div>
+  <div id="result-artist"></div>
+  <div id="result-album"></div>
+  <img id="result-art" src="" alt="Album Art">
+  <button id="result-dismiss" onclick="dismissResult()">Click or press Space to spin again</button>
+</div>
+
+<div class="reels">
+  <div class="reel-wrap">
+    
+    <div class="reel-outer">
+      <div class="highlight"></div>
+      <div class="reel-inner" id="innerLetter"></div>
+    </div>
+  </div>
+
+  <div class="separator">·</div>
+
+  <div class="reel-wrap">
+    <div class="reel-outer">
+      <div class="highlight"></div>
+      <div class="reel-inner" id="innerNumber"></div>
+    </div>
+  </div>
+</div>
+
+<button class="spin-btn" onclick="spin()">SPIN</button>
+
+<script>
+const ALBUMS = {
+  A: {1:'Silkroad - Priest',2:'Rubens - Hoops',3:'The Wombats - Proudly Present',4:'Tame Impala - Currents',5:'The Kooks - Inside The Inside Out',6:'MGMT - Oracular Spectacular',7:'Ballpark Music - Like Love',8:'Red Hot Chilli Peppers - Stadium Arcadium',9:'Synapson - Convergence',10:'Massive Attack - Mezzanine'},
+  B: {1:'Big Scary - Not Art',2:'Ben Bohmer - Breathing',3:'Fleetwood Mac - Rumours',4:'Flight Facilities - Down To Earth',5:'Flume - Skin',6:'Imagine Dragons - Smoke + Mirrors',7:'Dualist Inquiry - Doppelganger',8:'Maggie Rogers - Heard It In A Past Life',9:'Opius - Omniversal',10:'Ballpark Music - Happiness And Surrounding Suburbs'},
+  C: {1:'Rufus - Bloom',2:'South Summit - The Bliss',3:'Katfish and the bottlemen',4:'Chet Faker - Build On Glass',5:"Arctic Monkeys - Whatever People Say, I Am, That's What I'm Not",6:'Silkroad - Harem',7:'Glass Animals - Zaba',8:'Catfish And The Bottlemen',9:'Haim - Days Are Gone',10:'Mansionair - Shaddowboxer'},
+  D: {1:'Banks - Goddess',2:'Purity Ring - Shrines',3:'Flight Facilities - Forever',4:'Khalid - American Teen',5:"Tod Terje - It's the Arps",6:"Kaytranada - Ain't No Damn Way!",7:'Disclosure - Settle',8:'Flume - Palaces',9:'Dense - Elixir',10:'Daft Punk - Random Access Memories'},
+  E: {1:'Odesza - In Return',2:'Daft Punk - Discovery',3:'Kings Of Leon - Only By The Night',4:'Halsey - Badlands',5:'Zhu - the Nightday',6:'Rufus - Surrender',7:'SBTRKT - SBTRKT',8:'Claptone - Charmer',9:'Awolnation - Megalithic Symphony',10:'Rufus - Solace'},
+  F: {1:'Synapson - Super 8',2:'Croocked Colours - Vera',3:'Rufus - Atlas',4:'Arctic Monkeys - AM',5:'Purity Ring - Another Eternity',6:'Rufus - Inhale / Exhale',7:'Ballpark Music - Museum',8:'Moby Play',9:'Hayden James - Between Us',10:'Hozier - Hozier'},
+  G: {1:'Flume - Flume',2:'Jamie xx - In Colour',3:'The Rubens - The Rubens',4:'Big Scary - Animal',5:'Foo Fighters - In Your Honour',6:'Glass Animals - I Love You So Fucking Much',7:'Olivia Dean - The Art Of Loving',8:'The XX - XX',9:'Mansionair - Somekind Of Alchemy',10:'Disclosure Caracal'}
+};
+
+function getAlbum(letter, number) {
+  const entry = ALBUMS[letter]?.[number];
+  if (!entry) return null;
+  const dash = entry.indexOf(' - ');
+  if (dash === -1) return { artist: '', album: entry };
+  return { artist: entry.slice(0, dash), album: entry.slice(dash + 3) };
+}
+
+const LETTERS = ['A','B','C','D','E','F','G'];
+const NUMBERS = ['1','2','3','4','5','6','7','8','9','10'];
+const REPEATS = 40;
+
+let reelL, reelN, spinning = false;
+
+function buildReel(innerId, items) {
+  const inner = document.getElementById(innerId);
+  const outer = inner.parentElement;
+  inner.innerHTML = '';
+
+  const reelH = outer.offsetHeight;
+  const itemH = reelH * 0.28;
+
+  for (let r = 0; r < REPEATS; r++) {
+    items.forEach(v => {
+      const div = document.createElement('div');
+      div.className = 'reel-item';
+      div.style.height = itemH + 'px';
+      div.textContent = v;
+      inner.appendChild(div);
+    });
+  }
+
+  const loopLen = items.length * itemH;
+  const startY = -(Math.floor(REPEATS / 2) * loopLen) + reelH / 2 - itemH / 2;
+
+  inner.style.transform = `translateY(${startY}px)`;
+
+  return { inner, outer, items, itemH, reelH, loopLen, y: startY };
+}
+
+function markActive(reel) {
+  const { inner, outer, itemH } = reel;
+  const or = outer.getBoundingClientRect();
+  const cy = or.top + or.height / 2;
+
+  inner.querySelectorAll('.reel-item').forEach(el => {
+    const r = el.getBoundingClientRect();
+    const mid = r.top + itemH / 2;
+    el.classList.toggle('active', Math.abs(mid - cy) < itemH * 0.45);
+  });
+}
+
+function animateSpin(reel, targetIndex, duration) {
+  return new Promise(resolve => {
+    const { inner, outer, items, itemH, reelH, loopLen } = reel;
+    const startY = reel.y;
+
+    // The exact Y that centres targetIndex in the window, for a given repeat block r
+    const centreY = reelH / 2 - itemH / 2;
+    function landY(r) {
+      return -(r * loopLen + targetIndex * itemH) + centreY;
+    }
+
+    // Need enough distance for spin-up + full-speed + spin-down phases
+    const minLoops = 5;
+    const minDist  = minLoops * loopLen;
+
+    let bestY = null;
+    for (let r = 0; r < REPEATS; r++) {
+      const ly   = landY(r);
+      const dist = startY - ly;
+      if (dist >= minDist) {
+        if (bestY === null || dist < (startY - bestY)) bestY = ly;
+      }
+    }
+    if (bestY === null) bestY = landY(Math.floor(REPEATS * 0.6));
+
+    const totalDist = startY - bestY;
+    const startTime = performance.now();
+
+    // Custom easing: ease-in for first 20%, full speed 20-65%, ease-out-cubic for last 35%
+    // This gives a satisfying spin-up → blur → gradual brake feel.
+    function spinEase(t) {
+      if (t < 0.20) {
+        // ease-in quad: accelerate from 0
+        const t2 = t / 0.20;
+        return 0.10 * (t2 * t2);
+      } else if (t < 0.65) {
+        // linear full-speed phase
+        const t2 = (t - 0.20) / 0.45;
+        return 0.10 + 0.55 * t2;
+      } else {
+        // ease-out cubic: smooth brake to stop
+        const t2 = (t - 0.65) / 0.35;
+        return 0.65 + 0.35 * (1 - Math.pow(1 - t2, 3));
+      }
+    }
+
+    function frame() {
+      const now = performance.now();
+      const t   = Math.min((now - startTime) / duration, 1);
+      reel.y    = startY - totalDist * spinEase(t);
+
+      inner.style.transform = `translateY(${reel.y}px)`;
+      markActive(reel);
+
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        reel.y = bestY;
+        inner.style.transform = `translateY(${bestY}px)`;
+        markActive(reel);
+        resolve();
+      }
+    }
+
+    requestAnimationFrame(frame);
+  });
+}
+
+
+function showResult(letter, number) {
+  const info = getAlbum(letter, number);
+  document.getElementById('result-code').textContent = letter + number;
+  if (info) {
+    document.getElementById('result-artist').textContent = info.artist;
+    document.getElementById('result-album').textContent = info.album;
+  } else {
+    document.getElementById('result-artist').textContent = '';
+    document.getElementById('result-album').textContent = 'Unknown';
+  }
+  const img = document.getElementById('result-art');
+  img.src = 'album art/' + letter + number + '.webp';
+  img.onerror = () => { img.style.display = 'none'; };
+  img.onload  = () => { img.style.display = 'block'; };
+  document.getElementById('result-overlay').classList.add('visible');
+}
+
+function dismissResult() {
+  document.getElementById('result-overlay').classList.remove('visible');
+}
+
+function initReels() {
+  reelL = buildReel('innerLetter', LETTERS);
+  reelN = buildReel('innerNumber', NUMBERS);
+  markActive(reelL);
+  markActive(reelN);
+}
+
+initReels();
+
+async function spin() {
+  if (spinning) return;
+  spinning = true;
+
+  // Clear any previous flash
+  document.querySelectorAll('.reel-outer').forEach(el => {
+    el.classList.remove('flash');
+    void el.offsetWidth; // force reflow so animation can retrigger
+  });
+
+  const letterIdx = Math.floor(Math.random() * LETTERS.length);
+  const numberIdx = Math.floor(Math.random() * NUMBERS.length);
+
+  const letterDur = 2000 + Math.random() * 400;
+  const numberDur = letterDur + 500;
+
+  // Run both; flash each reel as it finishes
+  await Promise.all([
+    animateSpin(reelL, letterIdx, letterDur).then(() => {
+      reelL.outer.classList.add('flash');
+    }),
+    animateSpin(reelN, numberIdx, numberDur).then(() => {
+      reelN.outer.classList.add('flash');
+    }),
+  ]);
+
+  // Show overlay after number reel lands (it's the last)
+  const letter = LETTERS[letterIdx];
+  const number = parseInt(NUMBERS[numberIdx]);
+  showResult(letter, number);
+
+  spinning = false;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !e.repeat) {
+    e.preventDefault();
+    const overlay = document.getElementById('result-overlay');
+    if (overlay.classList.contains('visible')) {
+      dismissResult();
+    } else {
+      spin();
+    }
+  }
+});
+</script>
+
+</body>
+</html>
