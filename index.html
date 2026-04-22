@@ -225,6 +225,7 @@
       line-height: 1.1;
     }
 
+    #result-art-link { display: block; line-height: 0; }
     #result-art {
       width: clamp(200px, 28vw, 380px);
       height: clamp(250px, 35vw, 475px);
@@ -269,7 +270,9 @@
   <div id="result-code"></div>
   <div id="result-artist"></div>
   <div id="result-album"></div>
-  <img id="result-art" src="" alt="Album Art">
+  <a id="result-art-link" href="#" target="_blank" rel="noopener">
+    <img id="result-art" src="" alt="Album Art">
+  </a>
   <button id="result-dismiss" onclick="dismissResult()">Click or press Space to spin again</button>
 </div>
 
@@ -312,6 +315,16 @@ function getAlbum(letter, number) {
   if (dash === -1) return { artist: '', album: entry };
   return { artist: entry.slice(0, dash), album: entry.slice(dash + 3) };
 }
+
+const LINKS = {
+  A: {1:'https://open.spotify.com/album/4ITQYBkREZZ0PVvIgWgFEm?si=zLPnljqiRpePEB83y0jE0w',2:'https://open.spotify.com/album/09nqIkoFAKnf77GEPBY6x1?si=jaRAQYbyQz2q-BdJwSS-qw',3:'https://open.spotify.com/album/1hKNgyPKnkCjWtH5GtusTq?si=7Heog6O_TtS4TGxuV4iUAg',4:'https://open.spotify.com/album/79dL7FLiJFOO0EoehUHQBv?si=nKI0NcELSiazw76F5J8rCQ',5:'https://open.spotify.com/album/03JPFQvZRnHHysSZrSFmKY?si=YbjTwaSMTOeEXq_E8O68SQ',6:'https://open.spotify.com/album/6mm1Skz3JE6AXneya9Nyiv?si=zHjVl1F7ToCjgW7sBPnHNQ',7:'https://open.spotify.com/album/5sZBCDhQ1XkWmR8OxT4aFL?si=YX1hEOhIRNKS0DctvFizUQ',8:'https://open.spotify.com/album/7xl50xr9NDkd3i2kBbzsNZ?si=0Y-In0--TwOUFvC02ynw_A',9:'https://open.spotify.com/album/1qZyM5DozaVtdrRrW7imrR?si=5c12020dc0b8405c',10:'https://open.spotify.com/album/49MNmJhZQewjt06rpwp6QR?si=f85a67a8d50b456a'},
+  B: {1:'https://open.spotify.com/album/5t0iAWrZhkR48kCGVYjSbx?si=4iujOvyuTJuwPP_mYkgriQ',2:'https://open.spotify.com/album/1bgPsKJwqED6DoNaZNdM42?si=yNqy4WC7TIWjR0FuEFeUMQ',3:'https://open.spotify.com/album/1bt6q2SruMsBtcerNVtpZB?si=7qGyDzwhSPyNeFoQPleEhg',4:'https://open.spotify.com/album/4K4xD770j3Sge06Pohs8A3?si=a3OH3ldFRhyFqEfHlnKJTA',5:'https://open.spotify.com/album/5OKJZzkMP66fr60sZ1QGqB?si=AhKLnRnlRMu9x9FwPeBs-g',6:'https://open.spotify.com/album/6ecx4OFG0nlUMqAi9OXQER?si=RMNqjc2_SqOVbqPU0d1FiA',7:'https://open.spotify.com/album/34FArTiGUJ7ODjI1TM2iwp?si=6s_ABBZoSQmWfz1RWjwdFQ',8:'https://open.spotify.com/album/5AHWNPo3gllDmixgAoFru4?si=79c9b2c8a59340f7',9:'https://open.spotify.com/album/2s0KYad9VU1HTQ1IsxvWPu?si=a465657b147e4a15',10:'https://open.spotify.com/album/5Tp5zLJbNfCPHoSo9cDfvg?si=a351fbd71da2494c'},
+  C: {1:'https://open.spotify.com/album/4EAehCii5lZgeewct1LA5p?si=SgrktC90Q7W81AyLuTGmeA',2:'https://open.spotify.com/album/0zgsdVLkyHNlrBcoLm09HC?si=ZmNnb7t9TmewOkszY40oDA',3:'https://open.spotify.com/album/0C0OFASoQC57yC12vQhCwN?si=sFha6Na1R8GhD49cKJqKqg',4:'https://open.spotify.com/album/3Q1RS3mRxpm2wTRUGuzBxQ?si=cronSX7dQiCXr6EzVKoAUA',5:'https://open.spotify.com/album/50Zz8CkIhATKUlQMbHO3k1?si=KduVTkFjQTmwKPBz17a8mw',6:'https://open.spotify.com/album/7GDzzxb3wPpa1Mgx7nDDRT?si=dz3VxYinRqCx23zwG-0fAg',7:'https://open.spotify.com/album/14IOe7ahxQPTwUYUQX3IFi?si=yJihFfr9RbCyfAjsNbFE1Q',8:'https://open.spotify.com/artist/2xaAOVImG2O6lURwqperlD?si=52d4387d6f47476c',9:'https://open.spotify.com/album/7CzrzGbCwqT8Y43tvIUPBX?si=6e7a14e2b2154012',10:'https://open.spotify.com/album/15mgFVCst3upwCnD6LjeWt?si=07e2798df5ef4274'},
+  D: {1:'https://open.spotify.com/album/1eeYYgK208xvkCEGkYqWah?si=1XZWIXu6T96bnqJpg3WGiQ',2:'https://open.spotify.com/album/7nuxFL8lYQTIlpEEPEMpN8?si=Gd73b-lGTvS-RTK47tq_Kw',3:'https://open.spotify.com/album/4TFe5qpmqRrpcwL2Vus5yH?si=XwJPNfmYRzWsbuti8gghyg',4:'https://open.spotify.com/album/6kf46HbnYCZzP6rjvQHYzg?si=3Aom_hsDR9CWIck30TvKqA',5:'https://open.spotify.com/album/07HuAQQEbH1ShP4b9SsNwp?si=yVFyoTzXT-e2ZukPpx-dhw',6:'https://open.spotify.com/album/2ThDVXsGeZahogahzHAIw6?si=LQgspmf4Q-W3KDr0sB9hjg',7:'https://open.spotify.com/album/0v5BqH7RQlIuJIWfQCl1Bp?si=MAr7wcUbQTiP5ME_q9ESYA',8:'https://open.spotify.com/album/6SZtno2XqSmfr5MKsNeXmC?si=5230eb0495984449',9:'https://open.spotify.com/album/4ufl5XsSkzSKZ14g1MV55y?si=93153d9e8aee44f9',10:'https://open.spotify.com/album/4m2880jivSbbyEGAKfITCa?si=e5b28e2535114117'},
+  E: {1:'https://open.spotify.com/album/5SXT6dwhHX56Sos7KMcMF5?si=-Bm9OumHQWijJ3omNUNUKw',2:'https://open.spotify.com/album/2noRn2Aes5aoNVsU6iWThc?si=1w9kwn70TOCK5pqzfD4bXA',3:'https://open.spotify.com/album/5CZR6ljD0x9fTiS4mh9wMp?si=UPvUEenVRPWKTo2kBvpoqA',4:'https://open.spotify.com/album/5OZJflQcQCdZLQjtUudCin?si=rQR0aGDJS1iWNutm-_vKAg',5:'https://open.spotify.com/album/75iYmhihZaJXZ0LmA7JGum?si=Ynv99r7wSvCQddl1s6iJ8A',6:'https://open.spotify.com/album/3SB9ntsoNwC4oUP6xM9DIN?si=uugCPhm-ToOQTphmhWtvYA',7:'https://open.spotify.com/album/35xfQriUFj6M2AVq78OsEq?si=cqBgPfPpSrab5jlYO-tJFA',8:'https://open.spotify.com/album/0OOjsSNzKmfzo1j6Z82PNG?si=0c3f800ef8f04d36',9:'https://open.spotify.com/album/1fag8cnc5p4Umu4tRMAsLv?si=7555f709048c4142',10:'https://open.spotify.com/album/2lS9Krf3XVLRJoFIRjoXI7?si=e62871c0741d4596'},
+  F: {1:'https://open.spotify.com/album/3PAzkKA8BGbN95N1YKzBuB?si=uPJBP6OvStaxvh4xNa-MDw',2:'https://open.spotify.com/album/0nHLhtFuslOav8hdjiq8b6?si=wJ2i49R4QbioG_JXqWeQqA',3:'https://open.spotify.com/album/1AD72FZKFKPeamhZzcuW9l?si=_p7u_mQ-QVqawksN8CQNNA',4:'https://open.spotify.com/album/78bpIziExqiI9qztvNFlQu?si=ntDgqRK6RPilN8zrSMCesA',5:'https://open.spotify.com/album/5ydKh3bO3jF6oZWkBrzwpn?si=p6u1l4FZTJSmiuGsTfbt6A',6:'https://open.spotify.com/album/3Fda4vhPP0Clk3EQNVipUP?si=Sr0Z-xN_QU6vecafCoYxXA',7:'https://open.spotify.com/album/2y9FVUXdajIzgn8wmavptY?si=p9TzgW0sQdG9uOD4c3CwZg',8:'https://open.spotify.com/album/4KZWx8zo5ym89aopr0dBIb?si=ba105a5ea226428a',9:'https://open.spotify.com/album/387xCAELz6eeONugqwsY3x?si=b4445699976a453a',10:'https://open.spotify.com/album/04E0aLUdCHnhnnYrDDvcHq?si=yhtqdt1LRXmUO3g4IzcJGg'},
+  G: {1:'https://open.spotify.com/album/1UPtz7ScpqLoi6eHocmK4X?si=KR5kGfgFQAma2dbuq8LfTw',2:'https://open.spotify.com/album/4gaNWHu5Caj3ItkYZ5i6uh?si=rtqQkpw4TJ22ugTaOeo5YA',3:'https://open.spotify.com/album/0wili4I6kVNRdyalhZ3yMR?si=KOn8pKJERFqEbTzbMfIGwQ',4:'https://open.spotify.com/album/56li66kqbZaI2Rchxs14tY?si=GnnQscaoSFKE_ypEdOL9Jg',5:'https://open.spotify.com/album/2eprpJCYbCbPZRKVGIEJxZ?si=pI5-TNeKS--UyLWmTBJ2uA',6:'https://open.spotify.com/album/5i6LJyHq9wxLSecf0N2Iuw?si=0Tgj6CxjSwKouHOK6msvsw',7:'https://open.spotify.com/album/0l8zYqoUeBYg47Gmevq9HZ?si=JPGUOUvLS-On7PYu-A6psw',8:'https://open.spotify.com/album/2av2ZSHlvD7rvLSsMvtYCG?si=4c5770cc1cff47bb',9:'https://open.spotify.com/album/4OOGYZfiKbOdWnu6lS78o3?si=4d9be625998e43d2',10:'https://open.spotify.com/album/08ipn1MH7xqgoqhUbtvCTy?si=c4c99f3b73bd47b9'}
+};
 
 const LETTERS = ['A','B','C','D','E','F','G'];
 const NUMBERS = ['1','2','3','4','5','6','7','8','9','10'];
@@ -436,6 +449,8 @@ function showResult(letter, number) {
     document.getElementById('result-artist').textContent = '';
     document.getElementById('result-album').textContent = 'Unknown';
   }
+  const link = document.getElementById('result-art-link');
+  link.href = LINKS[letter]?.[number] || '#';
   const img = document.getElementById('result-art');
   img.src = 'album art/' + letter + number + '.webp';
   img.onerror = () => { img.style.display = 'none'; };
